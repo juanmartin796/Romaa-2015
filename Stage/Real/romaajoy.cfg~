@@ -1,0 +1,30 @@
+	driver
+(
+  name 				  "romaa"
+	plugin 			  "libromaa"
+	provides 		  [ "position2d:0" ]
+	port				  "/dev/ttyUSB0"
+	baudrate 		  115200
+	motorpid 		  [ 1300.0 5000.0 1.0 ]
+	vwpid 			  [ 0.0 25.0 0.0 ]
+  wheel_control 0
+	todometry 	  25
+	tloop 			  20
+)
+
+# 1 m/sec max linear velocity
+# 30 deg/sec max angular velocity
+# Axis 1 is X
+# Axis 2 is Yaw
+# Y is not used here
+driver
+(
+  name        "linuxjoystick"
+  provides    [ "joystick:0" ]
+  requires    [ "position2d:0" ]
+  max_speed   [1 0 30]
+  axes        [1 -1 2]
+  port        "/dev/input/js1"
+  alwayson    1
+)
+

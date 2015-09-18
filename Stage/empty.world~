@@ -1,0 +1,36 @@
+include "map.inc"
+include "bigbob.inc"
+
+# configure the GUI window
+window
+(
+	size [700.000 700.000]
+	scale 41
+)
+
+# load an environment bitmap
+floorplan
+(
+	bitmap "bitmaps/cave.png"
+	size [15 15 1.5]
+)
+
+#Agregamos el robot recolector de basura que definimos en bigbob.inc
+bigbob
+(
+	name "bob1" 
+	pose [0 -6 0 90] 
+	color "green"
+)
+
+position
+(
+  drive "diff"
+
+  localization "gps"
+
+  # initial position estimate
+  localization_origin [10 10 10]
+)
+
+
