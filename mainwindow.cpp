@@ -14,7 +14,14 @@
 #include<qprocess.h>
 
 using namespace std;
+using namespace PlayerCc;
+
+PlayerClient    robot("localhost", 6665);
+Position2dProxy p2dProxy(&robot,0);
+
+
 bool prendido=false;
+bool finTramo1=false;
 
 QextSerialPort *port;
 
@@ -25,17 +32,90 @@ void MainWindow::onDataAvailable(){
         cout << "Recibido: " << endl;
         for(int i = 0; i < data.length(); i++){
             cout << data.at(i) << endl;
+            if(data.at(i)=='I'){
+                finTramo1=true;
+            }
         }
         cout << "Fin recibido" << endl;
     }
 }
+
+void etapa2(){
+    CvCapture *capture = NULL;
+    capture = cvCreateCameraCapture(0);
+
+    if(!capture){
+        cout<<"error"<<endl;
+    }
+
+    IplImage* frame;
+
+    frame = NULL;
+    cvNamedWindow( "Ventana del frame", CV_WINDOW_FREERATIO );
+
+    int x,y,i,j;
+    int detecta=0;
+    int punto =0;
+    CvScalar s;
+
+    while(1) {
+        frame = cvQueryFrame( capture );//Grabs the frame from a file
+        if( !frame ) break;
+
+        cvFlip(frame, frame, 1);
+
+        while (true){
+            x= rand() % (frame->width-25);
+            y= rand() % (frame->height-25);
+
+            detecta++;
+            if (x>=1 && y>=1){
+                for (i=-1; i<=1; i++){
+                    for (j=-1; j<=1; j++){
+                        s= cvGet2D(frame, y-j, x-i);
+                        //detecta el color rojo
+                        if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
+                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
+                            punto++;
+                        }
+                    }
+                }
+            }
+            if (punto==10) {break;}
+            if (detecta==10000) {break;}
+        }
+
+
+        //*************************** Si detecta la señal de STOP, manda un ascci para que se abra la puerta *******************************************
+
+        if (punto==10){
+            port->putChar('a');
+            cout<<"abrir la puerta"<<endl;
+            sleep(2);
+            p2dProxy.SetSpeed(0.5,0);
+        } else {
+            p2dProxy.SetSpeed(0.5,0);
+        }
+
+        //*************************************************************************************************************
+
+        punto=0;
+        detecta=0;
+
+        cvShowImage("Ventana del frame", frame);
+
+        char c=cvWaitKey(33);
+        if( c == 27 ) break;
+    }
+}
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     /*QProcess process;
-    process.start("player", QStringList() << "/home/juanmartin/Dropbox/Proyectos GUDA/Romaa-2015/Stage/vacio.cfg");
+    process.start("player", QStringList() << "/home/juanmartin/Dropbox/Proyectos GUDA/Romaa 2015/Stage/empty.cfg");
     sleep(3);*/
 
 
@@ -50,10 +130,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //**********************************************************************************
     //          Codigo para hacer mover al romaa para adelante
     //**********************************************************************************
-    using namespace PlayerCc;
 
-    PlayerClient    robot("localhost", 6665);
-    Position2dProxy p2dProxy(&robot,0);
+    //PlayerClient    robot("localhost", 6665);
+    //Position2dProxy p2dProxy(&robot,0);
     p2dProxy.SetMotorEnable(1);
     //p2dProxy.SetSpeed(0.5, 0);
     //sleep(5); //va a andar por 5 segundos;
@@ -178,9 +257,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
         cvShowImage("Ventana del frame", frame);
 
+        if (finTramo1==true){
+            p2dProxy.SetSpeed(0, 1);
+            sleep(1);
+            p2dProxy.SetSpeed(0,0);
+            break;
+        }
+
         char c=cvWaitKey(33);
         if( c == 27 ) break;
     }
+
+    etapa2();
 
     ui->setupUi(this);
 

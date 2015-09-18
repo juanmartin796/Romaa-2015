@@ -3,7 +3,7 @@ define bigbob position
 	size [1.25 1 1]
 
 	#centro de rotacion del robot
-        origin [0.0 0.0 0.5 0]
+        origin [0 0 0.5 0]
 
 	drive "diff"
 
