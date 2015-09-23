@@ -22,6 +22,11 @@ Position2dProxy p2dProxy(&robot,0);
 
 bool prendido=false;
 bool finTramo1=false;
+bool finTramo2=false;
+bool etapa1=true;
+bool etapa31=false;
+bool etapa32=false;
+bool etapa33=false;
 
 QextSerialPort *port;
 
@@ -33,13 +38,115 @@ void MainWindow::onDataAvailable(){
         for(int i = 0; i < data.length(); i++){
             cout << data.at(i) << endl;
             if(data.at(i)=='I'){
-                finTramo1=true;
+                if (etapa1==true){
+                    finTramo1=true;
+                    etapa1=false;
+                    cout<<"Etapa 3.1"<<endl;
+                } else if(etapa31==true){ //etapa 3, fase1, girar 90 grados al detectar cinta
+                    p2dProxy.SetSpeed(0, 1);
+                    sleep(3);
+                    p2dProxy.SetSpeed(0.5, 0);
+                    etapa31=false;
+                    etapa32=true;
+                    cout<<"Etapa 3.2"<<endl;
+                } else if (etapa32==true){ //etapa 3, fase 2, girar 180 grados al detectar cinta
+                    p2dProxy.SetSpeed(0,2);
+                    sleep(3);
+                    p2dProxy.SetSpeed(0.5,0);
+                    etapa32=false;
+                    etapa33=true;
+                    cout<<"Etapa 3.3"<<endl;
+                } else if (etapa33==true){ //etapa 3, fase 3, girar -90 grados al detectar cinta;
+                    p2dProxy.SetSpeed(0, -2);
+                    sleep(3);
+                    p2dProxy.SetSpeed(0.5,0);
+                    etapa33=false;
+                    cout<<"Etapa final"<<endl;
+                }
+            }else if(data.at(i)=='A'){  //si detecta la puerta cerrada, recibe una A y el robot frena, espera un tiempo, y avanza
+                p2dProxy.SetSpeed(0,0);
+                port->putChar('q');
+                cout<<"abriendo la puerta...."<<endl;
+                sleep(3);
+                p2dProxy.SetSpeed(0.5,0);
+                finTramo2=true;
             }
         }
         cout << "Fin recibido" << endl;
     }
 }
 
+//************************************************************************************************************************
+//************************************************** ETAPA 3 *************************************************************
+//************************************************************************************************************************
+void etapa3(){
+    p2dProxy.SetSpeed(0.5,0);
+    etapa31=true;
+    CvCapture *capture = NULL;
+    capture = cvCreateCameraCapture(0);
+
+    if(!capture){
+        cout<<"error"<<endl;
+    }
+
+    IplImage* frame;
+
+    frame = NULL;
+    cvNamedWindow( "Ventana del frame", CV_WINDOW_FREERATIO );
+
+    int x,y,i,j;
+    int detecta=0;
+    int punto =0;
+    CvScalar s;
+
+    while(1) {
+        frame = cvQueryFrame( capture );//Grabs the frame from a file
+        if( !frame ) break;
+
+        cvFlip(frame, frame, 1);
+
+        while (true){
+            x= rand() % (frame->width-25);
+            y= rand() % (frame->height-25);
+
+            detecta++;
+            if (x>=1 && y>=1){
+                for (i=-1; i<=1; i++){
+                    for (j=-1; j<=1; j++){
+                        s= cvGet2D(frame, y-j, x-i);
+                        //detecta el color amarillo
+                        if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
+                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
+                            punto++;
+                        }
+                    }
+                }
+            }
+            if (punto==10) {break;}
+            if (detecta==10000) {break;}
+        }
+
+
+        //*************************** Algoritmo para la deteccion del chaleco*******************************************
+
+
+
+        //*************************************************************************************************************
+
+        punto=0;
+        detecta=0;
+
+        cvShowImage("Ventana del frame", frame);
+
+        char c=cvWaitKey(33);
+        if( c == 27 ) break;
+    }
+}
+
+
+//**************************************************************************************************************************
+//************************************************* ETAPA 2 ****************************************************************
+//**************************************************************************************************************************
 void etapa2(){
     CvCapture *capture = NULL;
     capture = cvCreateCameraCapture(0);
@@ -73,7 +180,7 @@ void etapa2(){
                 for (i=-1; i<=1; i++){
                     for (j=-1; j<=1; j++){
                         s= cvGet2D(frame, y-j, x-i);
-                        //detecta el color rojo
+                        //detecta el color amarillo
                         if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
                             cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
                             punto++;
@@ -104,9 +211,16 @@ void etapa2(){
 
         cvShowImage("Ventana del frame", frame);
 
+        if (finTramo2==true){
+            break;
+            etapa31=true;
+        }
+
         char c=cvWaitKey(33);
         if( c == 27 ) break;
     }
+
+    etapa3();
 }
 
 
@@ -124,7 +238,7 @@ MainWindow::MainWindow(QWidget *parent) :
     port->setQueryMode(QextSerialPort::EventDriven);
     port->open(QIODevice::ReadWrite);
     port->flush();
-    port->putChar('a');
+    //port->putChar('a');
     connect(port, SIGNAL(readyRead()), this, SLOT(onDataAvailable()));
 
     //**********************************************************************************
@@ -259,7 +373,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         if (finTramo1==true){
             p2dProxy.SetSpeed(0, 1);
-            sleep(1);
+            sleep(2);
             p2dProxy.SetSpeed(0,0);
             break;
         }
@@ -268,7 +382,7 @@ MainWindow::MainWindow(QWidget *parent) :
         if( c == 27 ) break;
     }
 
-    etapa2();
+    etapa3();
 
     ui->setupUi(this);
 
