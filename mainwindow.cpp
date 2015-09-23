@@ -23,10 +23,13 @@ Position2dProxy p2dProxy(&robot,0);
 bool prendido=false;
 bool finTramo1=false;
 bool finTramo2=false;
+bool finTramo3=false;
+bool finTramo4=false;
 bool etapa1=true;
 bool etapa31=false;
 bool etapa32=false;
 bool etapa33=false;
+bool etapa41=false;
 
 QextSerialPort *port;
 
@@ -39,6 +42,9 @@ void MainWindow::onDataAvailable(){
             cout << data.at(i) << endl;
             if(data.at(i)=='I'){
                 if (etapa1==true){
+                    p2dProxy.SetSpeed(0, 1);
+                    sleep(2);
+                    p2dProxy.SetSpeed(0,0);
                     finTramo1=true;
                     etapa1=false;
                     cout<<"Etapa 3.1"<<endl;
@@ -61,7 +67,14 @@ void MainWindow::onDataAvailable(){
                     sleep(3);
                     p2dProxy.SetSpeed(0.5,0);
                     etapa33=false;
+                    finTramo3=true;
+                    etapa41=true;
                     cout<<"Etapa final"<<endl;
+                } else if (etapa41==true){
+                    p2dProxy.SetSpeed(0,1);
+                    sleep(3);
+                    p2dProxy.SetSpeed(0.5,0);
+                    etapa41=false;
                 }
             }else if(data.at(i)=='A'){  //si detecta la puerta cerrada, recibe una A y el robot frena, espera un tiempo, y avanza
                 p2dProxy.SetSpeed(0,0);
@@ -75,6 +88,73 @@ void MainWindow::onDataAvailable(){
         cout << "Fin recibido" << endl;
     }
 }
+
+//************************************************************************************************************************
+//************************************************** ETAPA 4 *************************************************************
+//************************************************************************************************************************
+void etapa4(){
+    p2dProxy.SetSpeed(0.5,0);
+    etapa41=true;
+
+    CvCapture *capture = NULL;
+    capture = cvCreateCameraCapture(3);
+
+    if(!capture){
+        cout<<"error"<<endl;
+    }
+
+    IplImage* frame;
+
+    frame = NULL;
+    cvNamedWindow( "Ventana del frame", CV_WINDOW_FREERATIO );
+
+    int x,y,i,j;
+    int detecta=0;
+    int punto =0;
+    CvScalar s;
+
+    while(1) {
+        frame = cvQueryFrame( capture );//Grabs the frame from a file
+        if( !frame ) break;
+
+        cvFlip(frame, frame, 1);
+
+        while (true){
+            x= rand() % (frame->width-25);
+            y= rand() % (frame->height-25);
+
+            detecta++;
+            if (x>=1 && y>=1){
+                for (i=-1; i<=1; i++){
+                    for (j=-1; j<=1; j++){
+                        s= cvGet2D(frame, y-j, x-i);
+                        //detecta el color amarillo
+                        if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
+                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
+                            punto++;
+                        }
+                    }
+                }
+            }
+            if (punto==10) {break;}
+            if (detecta==10000) {break;}
+        }
+
+        punto=0;
+        detecta=0;
+
+        cvShowImage("Ventana del frame", frame);
+
+        if (finTramo4==true){
+            break;
+        }
+
+        char c=cvWaitKey(33);
+        if( c == 27 ) break;
+    }
+}
+
+
 
 //************************************************************************************************************************
 //************************************************** ETAPA 3 *************************************************************
@@ -138,6 +218,10 @@ void etapa3(){
 
         cvShowImage("Ventana del frame", frame);
 
+        if (finTramo3==true){
+            break;
+        }
+
         char c=cvWaitKey(33);
         if( c == 27 ) break;
     }
@@ -149,7 +233,7 @@ void etapa3(){
 //**************************************************************************************************************************
 void etapa2(){
     CvCapture *capture = NULL;
-    capture = cvCreateCameraCapture(0);
+    capture = cvCreateCameraCapture(3);
 
     if(!capture){
         cout<<"error"<<endl;
@@ -220,7 +304,7 @@ void etapa2(){
         if( c == 27 ) break;
     }
 
-    etapa3();
+    //etapa3();
 }
 
 
@@ -260,6 +344,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     CvCapture *capture = NULL;
     capture = cvCreateCameraCapture(1);
+
 
     if(!capture){
         cout<<"error"<<endl;
@@ -372,17 +457,23 @@ MainWindow::MainWindow(QWidget *parent) :
         cvShowImage("Ventana del frame", frame);
 
         if (finTramo1==true){
-            p2dProxy.SetSpeed(0, 1);
+            /*p2dProxy.SetSpeed(0, 1);
             sleep(2);
-            p2dProxy.SetSpeed(0,0);
+            p2dProxy.SetSpeed(0,0);*/
             break;
         }
 
         char c=cvWaitKey(33);
         if( c == 27 ) break;
     }
+    cvReleaseCapture(&capture);
+    etapa2();
 
+    cvReleaseCapture(&capture);
     etapa3();
+
+    cvReleaseCapture(&capture);
+    etapa4();
 
     ui->setupUi(this);
 
