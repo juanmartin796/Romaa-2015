@@ -124,7 +124,7 @@ MainWindow::MainWindow(QWidget *parent) :
     port->setQueryMode(QextSerialPort::EventDriven);
     port->open(QIODevice::ReadWrite);
     port->flush();
-    //port->putChar('a');
+    port->putChar('a');
     connect(port, SIGNAL(readyRead()), this, SLOT(onDataAvailable()));
 
     //**********************************************************************************
