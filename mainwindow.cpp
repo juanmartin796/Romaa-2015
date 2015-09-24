@@ -97,7 +97,7 @@ void etapa4(){
     etapa41=true;
 
     CvCapture *capture = NULL;
-    capture = cvCreateCameraCapture(3);
+    capture = cvCreateCameraCapture(1);
 
     if(!capture){
         cout<<"error"<<endl;
@@ -146,11 +146,15 @@ void etapa4(){
         cvShowImage("Ventana del frame", frame);
 
         if (finTramo4==true){
+            cvReleaseCapture(&capture);
             break;
         }
 
         char c=cvWaitKey(33);
-        if( c == 27 ) break;
+        if( c == 27 ) {
+            cvReleaseCapture(&capture);
+            break;
+        }
     }
 }
 
@@ -163,7 +167,7 @@ void etapa3(){
     p2dProxy.SetSpeed(0.5,0);
     etapa31=true;
     CvCapture *capture = NULL;
-    capture = cvCreateCameraCapture(0);
+    capture = cvCreateCameraCapture(2);
 
     if(!capture){
         cout<<"error"<<endl;
@@ -219,11 +223,15 @@ void etapa3(){
         cvShowImage("Ventana del frame", frame);
 
         if (finTramo3==true){
+            cvReleaseCapture(&capture);
             break;
         }
 
         char c=cvWaitKey(33);
-        if( c == 27 ) break;
+        if( c == 27 ) {
+            cvReleaseCapture(&capture);
+            break;
+        }
     }
 }
 
@@ -233,7 +241,7 @@ void etapa3(){
 //**************************************************************************************************************************
 void etapa2(){
     CvCapture *capture = NULL;
-    capture = cvCreateCameraCapture(3);
+    capture = cvCreateCameraCapture(1);
 
     if(!capture){
         cout<<"error"<<endl;
@@ -296,12 +304,16 @@ void etapa2(){
         cvShowImage("Ventana del frame", frame);
 
         if (finTramo2==true){
+            cvReleaseCapture(&capture);
             break;
             etapa31=true;
         }
 
         char c=cvWaitKey(33);
-        if( c == 27 ) break;
+        if( c == 27 ) {
+            cvReleaseCapture(&capture);
+            break;
+        }
     }
 
     //etapa3();
@@ -343,7 +355,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     CvCapture *capture = NULL;
-    capture = cvCreateCameraCapture(1);
+    capture = cvCreateCameraCapture(0);
 
 
     if(!capture){
@@ -460,20 +472,21 @@ MainWindow::MainWindow(QWidget *parent) :
             /*p2dProxy.SetSpeed(0, 1);
             sleep(2);
             p2dProxy.SetSpeed(0,0);*/
+            cvReleaseCapture(&capture);
             break;
         }
 
         char c=cvWaitKey(33);
-        if( c == 27 ) break;
+        if( c == 27 ){
+            cvReleaseCapture(&capture);
+            break;
+        }
     }
-    cvReleaseCapture(&capture);
+
     etapa2();
-
-    cvReleaseCapture(&capture);
     etapa3();
-
-    cvReleaseCapture(&capture);
     etapa4();
+    etapa2();
 
     ui->setupUi(this);
 
