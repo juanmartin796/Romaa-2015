@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-TARGET = Romaa_1.3
+TARGET = Romaa-2015
 TEMPLATE = app
 
 
