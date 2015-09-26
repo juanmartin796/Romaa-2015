@@ -113,6 +113,9 @@ void etapa4(){
     int detecta=0;
     int punto =0;
     CvScalar s;
+    int deltaR=20;
+    int deltaG=20;
+    int deltaB=20;
 
     while(1) {
         frame = cvQueryFrame( capture );//Grabs the frame from a file
@@ -129,16 +132,25 @@ void etapa4(){
                 for (i=-1; i<=1; i++){
                     for (j=-1; j<=1; j++){
                         s= cvGet2D(frame, y-j, x-i);
-                        //detecta el color amarillo
-                        if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
-                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
+                        //detecta el chaleco fosforecente
+                        if (( (int)s.val[0]>93-deltaB && (int)s.val[0]<93+deltaB )  && ((int)s.val[1]>193-deltaG && (int)s.val[1]<193+deltaG)
+                                && ((int)s.val[2]>165-deltaR && (int)s.val[2]<165+deltaR)){ //colores en orden BGR
+                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(255,255,255), CV_FILLED, CV_AA,0);
                             punto++;
                         }
                     }
                 }
             }
-            if (punto==10) {break;}
+            if (punto==50) {break;}
             if (detecta==10000) {break;}
+        }
+
+        if (punto==50){
+            port->putChar('q');
+            cout<<"se Detecto el chaleco"<<endl;
+            //p2dProxy.SetSpeed(0,0);
+        } else {
+            //p2dProxy.SetSpeed(0.5,0);
         }
 
         punto=0;
@@ -183,6 +195,9 @@ void etapa3(){
     int detecta=0;
     int punto =0;
     CvScalar s;
+    int deltaR=20;
+    int deltaG=20;
+    int deltaB=20;
 
     while(1) {
         frame = cvQueryFrame( capture );//Grabs the frame from a file
@@ -199,24 +214,26 @@ void etapa3(){
                 for (i=-1; i<=1; i++){
                     for (j=-1; j<=1; j++){
                         s= cvGet2D(frame, y-j, x-i);
-                        //detecta el color amarillo
-                        if ((int)s.val[0]<=80 && (int)s.val[1]>=160 && (int)s.val[2]>=160){ //colores en orden BGR
-                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(0,255,255), CV_FILLED, CV_AA,0);
+                        //detecta el chaleco fosforecente
+                        if (( (int)s.val[0]>93-deltaB && (int)s.val[0]<93+deltaB )  && ((int)s.val[1]>193-deltaG && (int)s.val[1]<193+deltaG)
+                                && ((int)s.val[2]>165-deltaR && (int)s.val[2]<165+deltaR)){ //colores en orden BGR
+                            cvCircle(frame, cvPoint(x-i,y-j),10, CV_RGB(255,255,255), CV_FILLED, CV_AA,0);
                             punto++;
                         }
                     }
                 }
             }
-            if (punto==10) {break;}
+            if (punto==50) {break;}
             if (detecta==10000) {break;}
         }
 
-
-        //*************************** Algoritmo para la deteccion del chaleco*******************************************
-
-
-
-        //*************************************************************************************************************
+        if (punto==50){
+            port->putChar('q');
+            cout<<"se Detecto el chaleco"<<endl;
+            //p2dProxy.SetSpeed(0,0);
+        } else {
+            //p2dProxy.SetSpeed(0.5,0);
+        }
 
         punto=0;
         detecta=0;
@@ -297,7 +314,7 @@ void etapa2(){
             cout<<"se Detecto el chaleco"<<endl;
             //p2dProxy.SetSpeed(0,0);
         } else {
-            p2dProxy.SetSpeed(0.5,0);
+            //p2dProxy.SetSpeed(0.5,0);
         }
 
         //*************************************************************************************************************
@@ -378,6 +395,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int detecta=0;
     int punto =0;
     int puntoAzul =0;
+    int puntoChaleco=0;
     CvScalar s;
 
     int sumPosX, sumPosY, sumPosObstX, sumPosObstY;
